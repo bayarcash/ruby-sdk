@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:   # manual run publishes ONLY to GitHub Packages
 
 permissions:
   contents: write   # create the GitHub Release
@@ -32,8 +33,10 @@ jobs:
 
       # ---- 1) Publish to RubyGems.org (OIDC trusted publishing, no token) ----
       - name: Configure RubyGems trusted publishing
+        if: github.event_name == 'push'
         uses: rubygems/configure-trusted-publisher@v1
       - name: Publish to RubyGems
+        if: github.event_name == 'push'
         run: gem push bayarcash-*.gem
 
       # ---- 2) Publish to GitHub Packages ----
@@ -44,6 +47,7 @@ jobs:
 
       # ---- 3) Create a GitHub Release for the tag ----
       - name: Create GitHub Release
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

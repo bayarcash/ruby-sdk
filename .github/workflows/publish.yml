@@ -1,0 +1,49 @@
+name: Publish
+
+# Publishes on every pushed tag like v1.0.1
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write   # create the GitHub Release
+  id-token: write   # RubyGems OIDC trusted publishing
+  packages: write   # GitHub Packages
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Test
+        run: bundle exec rspec
+
+      - name: Build gem
+        run: gem build bayarcash.gemspec
+
+      # ---- 1) Publish to RubyGems.org (OIDC trusted publishing, no token) ----
+      - name: Configure RubyGems trusted publishing
+        uses: rubygems/configure-trusted-publisher@v1
+      - name: Publish to RubyGems
+        run: gem push bayarcash-*.gem
+
+      # ---- 2) Publish to GitHub Packages ----
+      - name: Publish to GitHub Packages
+        run: gem push --host "https://rubygems.pkg.github.com/bayarcash" bayarcash-*.gem
+        env:
+          GEM_HOST_API_KEY: "Bearer ${{ secrets.GITHUB_TOKEN }}"
+
+      # ---- 3) Create a GitHub Release for the tag ----
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

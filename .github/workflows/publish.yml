@@ -32,12 +32,9 @@ jobs:
         run: gem build bayarcash.gemspec
 
       # ---- 1) Publish to RubyGems.org (OIDC trusted publishing, no token) ----
-      - name: Configure RubyGems trusted publishing
-        if: github.event_name == 'push'
-        uses: rubygems/configure-trusted-publisher@v1
       - name: Publish to RubyGems
         if: github.event_name == 'push'
-        run: gem push bayarcash-*.gem
+        uses: rubygems/release-gem@v1
 
       # ---- 2) Publish to GitHub Packages ----
       - name: Publish to GitHub Packages
